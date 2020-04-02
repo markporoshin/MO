@@ -54,34 +54,71 @@ def count_potential(C, x, n, m):
 
 
 def count_deltas(u, v, x, C, n, m):
-    deltas = np.zeros(n, m)
+    deltas = np.zeros((n, m))
     for r in range(n):
         for c in range(m):
-            if x[r][c] == 0:
+            if x[r][c] == -1:
                 deltas[r][c] = C[r][c] - (u[r] + v[c])
     return deltas
 
 
-def find_row(x, point, stack):
-    pass
+def find_row(x, point, stack, n, m, src):
+    if src == point and len(stack) > 0:
+        return True
+    row = point[0]
+    for c in range(m):
+        if (x[row][c] != -1 or (row, c) == src) and (row, c) != point:
+            if find_col(x, (row, c), stack, n, m, src):
+                stack.append(point)
+                return True
+    return False
 
 
-def find_col(x, point, stack):
-    pass
+def find_col(x, point, stack, n, m, src, flag=True):
+    if src == point and flag:
+        return True
+    col = point[1]
+    for r in range(n):
+        if (x[r][col] != -1 or (r, col) == src) and (r, col) != point:
+            if find_row(x, (r, col), stack, n, m, src):
+                stack.append(point)
+                return True
+    return False
 
-
-def find_cycle(x, point):
+def find_cycle(x, point, n, m):
     stack = []
-
-    find_col(x, point, stack)
-
+    find_col(x, point, stack, n, m, point, False)
     return stack
 
 
-def improve_plan(x, u, v, a, b, C, deltas):
-    point = deltas.argmin()
-    cycle = find_cycle(x, point)
+def recount_x(x, cycle):
+    i = 0
+    minus = []
+    plus = []
+    for el in cycle:
+        if i % 2 == 0:
+            minus.append(el)
+        else:
+            plus.append(el)
+        i += 1
+    minimum = min([x[el[0]][el[1]] for el in minus])
+    flag = True
+    for el in minus:
+        x[el[0]][el[1]] -= minimum
+        if x[el[0]][el[1]] == 0 and flag:
+            x[el[0]][el[1]] = -1
+            flag = False
+    for el in plus:
+        if x[el[0]][el[1]] == -1:
+            x[el[0]][el[1]] += 1 + minimum
+        else:
+            x[el[0]][el[1]] += minimum
 
+
+def improve_plan(x, a, b, C, deltas, n, m):
+    point = np.unravel_index(np.argmin(deltas, axis=None), deltas.shape)
+    cycle = find_cycle(x, point, n, m)
+    recount_x(x, cycle)
     pass
 
 
@@ -90,9 +127,11 @@ def method(a, b, C, n, m):
     u, v = count_potential(C, x, n, m)
     deltas = count_deltas(u, v, x, C, n, m)
     while (deltas < 0).any():
-        improve_plan(x, u, v, a, b, C, deltas)
+        improve_plan(x, a, b, C, deltas, n, m)
         u, v = count_potential(C, x, n, m)
         deltas = count_deltas(u, v, x, C, n, m)
+    return x
 
 
-method(a, b, C, n, m)
+x = method(a, b, C, n, m)
+print(x)
