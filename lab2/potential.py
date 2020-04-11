@@ -127,6 +127,7 @@ def method(a, b, C, n, m):
     u, v = count_potential(C, x, n, m)
     deltas = count_deltas(u, v, x, C, n, m)
     while (deltas < 0).any():
+        print("step")
         improve_plan(x, a, b, C, deltas, n, m)
         u, v = count_potential(C, x, n, m)
         deltas = count_deltas(u, v, x, C, n, m)
