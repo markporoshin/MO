@@ -36,7 +36,7 @@ def find_step(f, a0, l, F2, g2, sk, xk):
         a_more = a_more * l
 
 
-def find_dir(df, C, d, F1, f1_indexes, g, xk):
+def find_dir(df, C, d, F1, f1_indexes, g, xk, e):
     if F1.shape[0] != 0 and F1.shape[1] != 0:
         a_mtr = np.concatenate(C, F1)
     else:
@@ -47,12 +47,12 @@ def find_dir(df, C, d, F1, f1_indexes, g, xk):
     else:
         pk_mtr = E - a_mtr.transpose().dot(np.linalg.inv(a_mtr.dot(a_mtr.transpose()))).dot(a_mtr)
     sk = -pk_mtr.dot(df(xk))
-    if (sk != 0).any():
+    if (sk > e).any() or (e < -sk).any():
         return sk, State.PROCESS
-    elif a_mtr.shape == (0, 0) and (sk == 0).all():
+    elif a_mtr.shape == (0, 0) and (sk < e).all() and (sk > -e).all():
         return xk, State.ANSWER
     else:
-        w = - np.linalg.inv(a_mtr * a_mtr.transpose()).dot(a_mtr).dot(df(xk))
+        w = - np.linalg.inv(a_mtr.dot(a_mtr.transpose())).dot(a_mtr).dot(df(xk))
         u = w[f1_indexes:]
         if (u > 0).all():
             return xk, State.ANSWER
@@ -60,10 +60,10 @@ def find_dir(df, C, d, F1, f1_indexes, g, xk):
             u_j = np.where(u == np.amin(u))
             F1 = np.delete(F1, u_j, axis=0)
             f1_indexes.remove(f1_indexes.index(u_j))
-            return find_dir(df, C, d, F1, f1_indexes, g, xk)
+            return find_dir(df, C, d, F1, f1_indexes, g, xk, e)
 
 
-def method(f, df, C, d, F, g, xk, a0, l):
+def method(f, df, C, d, F, g, xk, a0, l, e):
     state = State.PROCESS
     while state != State.ANSWER:
         # prepare F1
@@ -74,7 +74,7 @@ def method(f, df, C, d, F, g, xk, a0, l):
         F1 = F[f1_indexes]
 
         # find direction
-        sk, state = find_dir(df, C, d, F1, f1_indexes, g, xk)
+        sk, state = find_dir(df, C, d, F1, f1_indexes, g, xk, e)
         if state == State.ANSWER:
             return xk
 
@@ -88,5 +88,5 @@ def method(f, df, C, d, F, g, xk, a0, l):
         xk = xk + ak * sk
 
 
-xk = method(f, df, C, d, F, g, np.array([3, 3, 3, 3]), 1, 0.7)
+xk = method(f, df, C, d, F, g, np.array([0, 0, 3, 3]), 1, 0.7, 1e-6)
 print(xk)
