@@ -124,6 +124,7 @@ def improve_plan(x, a, b, C, deltas, n, m):
 
 def method(a, b, C, n, m):
     x = northwest_angle(a, b, n, m)
+    print(x)
     u, v = count_potential(C, x, n, m)
     deltas = count_deltas(u, v, x, C, n, m)
     while (deltas < 0).any():
@@ -135,4 +136,5 @@ def method(a, b, C, n, m):
 
 
 x = method(a, b, C, n, m)
+print()
 print(x)
