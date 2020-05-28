@@ -1,19 +1,25 @@
 import numpy as np
 from math import sqrt, fabs, sin, cos
+import matplotlib.pyplot as plot
 
 
 def golden_ratio(fun, a, b, E):
-    # print("golden_section_method")
+    """
+    find a minimum of one-dimensional and unimodal function using golden ratio method
+    :param fun: the function to be minimized
+    :param a: left border
+    :param b: right border
+    :param E: accuracy
+    :return: x - point of minimum, f_x - value of function in x, counter - number of function call
+    """
     K = (1 + sqrt(5)) / 2
     lam = b - (b - a) / K
     mu = a + (b - a) / K
     y1 = fun(lam)
     y2 = fun(mu)
-    # print(f"[{lam}, {mu}]")
     counter = 2
     n = 0
     while fabs(b - a) > E:
-        # print("step %s: lam-%s mu-%s" % (n, lam, mu))
         if y1 > y2:
             a = lam
             lam = mu
@@ -21,7 +27,6 @@ def golden_ratio(fun, a, b, E):
             mu = a + (b - a) / K
             y2 = fun(mu)
             counter += 1
-            # print(f"[{lam}, {mu}]")
         else:
             b = mu
             mu = lam
@@ -29,12 +34,19 @@ def golden_ratio(fun, a, b, E):
             lam = b - (b - a) / K
             y1 = fun(lam)
             counter += 1
-            # print(f"[{lam}, {mu}]")
         n += 1
     return (b + a) / 2, counter
 
 
 def uniform_search(fun, a, b, E, n=2, counter=0):
+    """
+    find a minimum of one-dimensional and unimodal function using uniform search method
+    :param fun: the function to be minimized
+    :param a: left border
+    :param b: right border
+    :param E: accuracy
+    :return: x - point of minimum, f_x - value of function in x, counter - number of function call
+    """
     if b - a < E:
         return (b + a) / 2, counter
     step = (b - a) / n
@@ -54,11 +66,20 @@ def uniform_search(fun, a, b, E, n=2, counter=0):
     return uniform_search(fun, min_x, min_x + step, E, n, counter)
 
 
-def phi(fun, x, a, s):
-    return fun(x + s * a)
-
-
 def steepest_descent_method(fun, dfun, xk, E, minimize):
+    """
+        find a minimum function using uniform search steepest descent method
+        :param fun: the function to be minimized
+        :type fun: function(np.array)
+        :param dfun: the differential of function to be minimized
+        :type dfun: function(np.array)
+        :param xk: start point
+        :type xk: np.array
+        :param minimize:
+        :type minimize: function(function(np.array), double, double, double)
+        :param E: accuracy
+        :return: x - point of minimum, f_x - value of function in x, counter - number of function call
+        """
     counter = 0
     s0 = -dfun(xk)
     p = lambda a: fun(xk + s0 * a)
@@ -85,14 +106,12 @@ def df(x):
     return np.array([2 * x[0] + x[1] * cos(x[0] * x[1]), 2 * x[1] + x[0] * cos(x[0] * x[1])])
 
 
-x, f_x, numOfCalls = steepest_descent_method(f, df, np.array([2, 2]), 1e-2, golden_ratio)
-print(f"{x}, {f_x}, {numOfCalls}")
-
-
-
-
-
-
-
-
-
+E = 1
+for i in range(8):
+    _, _, numOfCallsDR = steepest_descent_method(f, df, np.array([2, 2]), E, golden_ratio)
+    _, _, numOfCallsUS = steepest_descent_method(f, df, np.array([2, 2]), E, uniform_search)
+    plot.plot(i, numOfCallsDR, 'r*')
+    plot.plot(i, numOfCallsUS, 'g*')
+    E = E / 10
+plot.show()
+# print(f"{x}, {f_x}, {numOfCalls}")
